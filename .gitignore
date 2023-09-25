@@ -152,6 +152,18 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# slurm out
+*.out
+
+# other stuff
+logs/
+checkpoint/
+saved_checkpoints/
+wandb/
+workdirs/
+.vscode/
+assets/
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
