@@ -4,34 +4,34 @@ import ml_collections
 def get_config():
   config = ml_collections.ConfigDict()
 
-  config.seed = 1
-  config.loss = 'ubot'
+  config.seed = 0
+  config.loss = 'ubot+'
   config.interpolant = 'linear'
 
   # data
   config.data = data = ml_collections.ConfigDict()
   data.task = 'OT'
-  data.name = 'multi'
-  data.dim = 100
-  data.whiten = False
-  data.test_id = 2
+  data.name = 'embrio'
+  data.dim = 5
+  data.whiten = True
+  data.test_id = 1
   data.t_0, data.t_1 = 0.0, 1.0
 
   # models
   config.model_s = model_s = ml_collections.ConfigDict()
   model_s.input_dim = data.dim
-  model_s.name = 'mlp_s'
+  model_s.name = 'mlp_scalar_s'
   model_s.ema_rate = 0.999
   model_s.nonlinearity = 'swish'
   model_s.nf = 512
-  model_s.n_layers = 3
+  model_s.n_layers = 2
   model_s.skip = False
   model_s.embed_time = True
   model_s.dropout = 0.0
 
   config.model_q = model_q = ml_collections.ConfigDict()
   model_q.input_dim = data.dim
-  model_q.n_marginals = 4 if data.test_id is None else 3
+  model_q.n_marginals = 5 if data.test_id is None else 4
   model_q.name = 'mlp_q'
   model_q.ema_rate = 0.999
   model_q.nonlinearity = 'swish'
@@ -62,7 +62,7 @@ def get_config():
   config.train = train = ml_collections.ConfigDict()
   train.batch_size = 512
   train.n_gradient_steps = 10
-  train.step_size = 1e-1
+  train.step_size = 1e-2
   train.n_jitted_steps = 1
   train.n_iters = 100_000
   train.save_every = 200_000

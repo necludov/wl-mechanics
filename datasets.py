@@ -127,11 +127,36 @@ def get_data(config, init_key):
 
 def get_toy_data(config, init_key):
   init_key = jax.random.split(init_key)
-  DS = 1_000
-  sigma = 1e-1
-  X_init = (jnp.ones((DS//8, 8))*(2*jnp.pi*jnp.arange(8)/8).reshape(1,-1)).reshape(-1,1)
-  X_init = jnp.concatenate([jnp.cos(X_init), jnp.sin(X_init)], 1)
-  X_final = 2*X_init
-  X_init += sigma*jax.random.normal(init_key[0], shape=(DS, 2))
-  X_final += sigma*jax.random.normal(init_key[1], shape=(DS, 2))
-  return [X_init, X_final]
+  DS = 2_000
+  sigma = 3e-1
+  X_init = jnp.concatenate([-jnp.ones((DS,1)), jnp.zeros((DS,1))], 1)
+  X_final = -X_init
+  X_final = jnp.concatenate([X_final[:DS//2] + jnp.array([[0.0, 0.0]]), X_final[DS//2:] - jnp.array([[0.0, 0.0]])], 0)
+  X_init += sigma*jax.random.normal(init_key[0], shape=(X_init.shape[0], 2))
+  X_final += sigma*jax.random.normal(init_key[1], shape=(X_final.shape[0], 2))
+  
+  inv_scaler = lambda _x: _x
+  return [X_init, X_final], inv_scaler
+
+# def get_toy_data(config, init_key):
+#   init_key = jax.random.split(init_key)
+#   DS = 1_000
+#   sigma = 1e-1
+#   X_init = jnp.concatenate([-jnp.ones((DS,1)), jnp.zeros((DS,1))], 1)
+#   X_final = -X_init
+#   X_init += sigma*jax.random.normal(init_key[0], shape=(DS, 2))
+#   X_final += sigma*jax.random.normal(init_key[1], shape=(DS, 2))
+  
+#   inv_scaler = lambda _x: _x
+#   return [X_init, X_final], inv_scaler
+
+# def get_toy_data(config, init_key):
+#   init_key = jax.random.split(init_key)
+#   DS = 1_000
+#   sigma = 1e-1
+#   X_init = (jnp.ones((DS//8, 8))*(2*jnp.pi*jnp.arange(8)/8).reshape(1,-1)).reshape(-1,1)
+#   X_init = jnp.concatenate([jnp.cos(X_init), jnp.sin(X_init)], 1)
+#   X_final = 2*X_init
+#   X_init += sigma*jax.random.normal(init_key[0], shape=(DS, 2))
+#   X_final += sigma*jax.random.normal(init_key[1], shape=(DS, 2))
+#   return [X_init, X_final]

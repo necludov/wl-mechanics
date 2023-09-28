@@ -7,7 +7,7 @@
 # for normal t4v2,t4v1,a40
 # for high t4v2
 # for deadline t4v2,t4v1,a40
-#SBATCH --partition=a40
+#SBATCH --partition=a40,t4v2
 
 #SBATCH --gres=gpu:1
 #SBATCH --account=deadline
@@ -29,9 +29,9 @@ source /ssd003/home/${USER}/.bashrc
 source /ssd003/home/${USER}/venvs/jax-env/bin/activate
 
 
-python main.py --config configs/embrio/phot.py \
+python main.py --config configs/multi100/ubot.py \
                --workdir $PWD/checkpoint/${SLURM_JOB_ID} \
-               --mode '5seeds'
+               --mode 'train'
 
 echo `date`: "Job $SLURM_JOB_ID finished running, exit code: $?"
 

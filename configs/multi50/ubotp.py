@@ -4,17 +4,17 @@ import ml_collections
 def get_config():
   config = ml_collections.ConfigDict()
 
-  config.seed = 1
-  config.loss = 'ubot'
+  config.seed = 10
+  config.loss = 'ubot+'
   config.interpolant = 'linear'
 
   # data
   config.data = data = ml_collections.ConfigDict()
   data.task = 'OT'
   data.name = 'multi'
-  data.dim = 100
+  data.dim = 50
   data.whiten = False
-  data.test_id = 2
+  data.test_id = 1
   data.t_0, data.t_1 = 0.0, 1.0
 
   # models

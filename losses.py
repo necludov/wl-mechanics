@@ -16,6 +16,8 @@ def get_loss(config, model_s, model_q, time_sampler, train):
     return get_loss_ours(config, model_s, model_q, time_sampler, train)
   elif config.loss == 'ubot':
     return get_loss_ours(config, model_s, model_q, time_sampler, train)
+  elif config.loss == 'ubot+':
+    return get_loss_ours(config, model_s, model_q, time_sampler, train)
   elif config.loss == 'rf':
     return get_loss_rf(config, model_s, model_q, time_sampler, train)
   else:
@@ -38,7 +40,7 @@ def get_loss_ours(config, model_s, model_q, time_sampler, train):
       return dsdt + 0.5*(dsdx**2).sum(1, keepdims=True) + physical_potential(_t, _x)
   elif config.loss == 'sb':
     def potential(_t, _x, _key, _s):
-      keys = random.split(_key, 3)
+      keys = random.split(_key, 2)
       dsdt_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=0)
       dsdx_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=1)
       
@@ -48,25 +50,17 @@ def get_loss_ours(config, model_s, model_q, time_sampler, train):
       out = dsdt_val + 0.5*(dsdx_val**2).sum(1, keepdims=True)
       out += 0.5*config.sigma**2*(jvp_val*eps).sum(1, keepdims=True)
       return out
-    # def potential(_t, _x, _key, _s):
-    #   keys = random.split(_key, 3)
-    #   dsdt_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=0)
-    #   dsdx_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=1)
-      
-    #   dsdt_val = dsdt_fn(_t, _x, keys[1])
-    #   dsdx_val = dsdx_fn(_t, _x, keys[1])
-    #   out = dsdt_val + 0.5*(dsdx_val**2).sum(1, keepdims=True)
-    #   jacobian = jax.jacrev(lambda __x: dsdx_fn(_t, __x, keys[1]).sum(0))(_x)
-    #   print(jacobian.shape, 'jacobian.shape', flush=True)
-    #   laplacian = jnp.trace(jacobian.transpose((1,0,2)), axis1=1, axis2=2)
-    #   print(laplacian.shape, 'laplacian.shape', flush=True)
-    #   out += 0.5*config.sigma**2*laplacian[:, None]
-    #   return out
   elif config.loss == 'ubot':
     def potential(_t, _x, _key, _s):
       dsdtdx_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=[0,1])
       dsdt, dsdx = dsdtdx_fn(_t, _x, _key)
       return dsdt + 0.5*(dsdx**2).sum(1, keepdims=True) + 0.5*(_s(_t, _x, _key)**2)
+  elif config.loss == 'ubot+':
+    physical_potential = get_physical_potential(config)
+    def potential(_t, _x, _key, _s):
+      dsdtdx_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=[0,1])
+      dsdt, dsdx = dsdtdx_fn(_t, _x, _key)
+      return dsdt + 0.5*(dsdx**2).sum(1, keepdims=True) + 0.5*(_s(_t, _x, _key)**2) + physical_potential(_t, _x)
   else:
     NotImplementedError(f'potential for config.loss: {config.loss} is not implemented')
 
@@ -201,13 +195,23 @@ def get_physical_potential(config):
     t_grid.append(t[i])
   t_grid = jnp.array(t_grid)
   acc_grid = jnp.stack(acc_grid)
+  max_acc = jnp.max(jnp.linalg.norm(acc_grid, axis=1))
   
   def potential(t, x):
     ids = jnp.argmin(jnp.abs(t - t_grid[None,:]), axis=1)
     out = -(x*acc_grid[ids]).sum(1, keepdims=True)
+    out = jnp.clip(out, -1e4, max_acc)
     return out
     
   return potential
+
+# def get_physical_potential(config):
+#   def potential(t, x):
+#     out = 5*(x**2).sum(1, keepdims=True)
+#     out = jnp.clip(out, -1, 15)
+#     return out
+    
+#   return potential
 
 # def get_physical_potential(config):
 #   init_key = random.PRNGKey(0)

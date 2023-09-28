@@ -25,7 +25,7 @@ def launch(argv):
     config = FLAGS.config
     for seed in range(config.seed,config.seed+5):
       config.seed = seed
-      for test_id in [1,2]:
+      for test_id in [3]:
         config.data.test_id = test_id
         run_lib.train(config, FLAGS.workdir)
   else:

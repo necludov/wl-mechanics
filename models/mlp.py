@@ -39,6 +39,39 @@ class MLP(nn.Module):
     h = act(nn.Dense(nf)(h)) 
     h = nn.Dense(config.input_dim)(h)
     return (h*x).sum(1, keepdims=True)
+  
+  
+@utils.register_model(name='mlp_scalar_s')
+class MLP(nn.Module):
+  config: ml_collections.ConfigDict
+
+  @nn.compact
+  def __call__(self, t: jnp.ndarray, x: jnp.ndarray, train: bool):
+    config = self.config
+    act = get_act(config)
+    nf = config.nf
+
+    if config.embed_time:
+      # temb = layers.get_timestep_embedding(t.ravel(), nf)
+      temb = t
+      temb = nn.Dense(nf)(temb)
+      temb = nn.Dense(nf)(act(temb))
+      h = x
+    else:
+      h = jnp.hstack([x, t])
+    
+    h = act(nn.Dense(nf)(h))
+    for _ in range(config.n_layers):
+      if config.embed_time:
+        h += temb
+      h = nn.Dropout(config.dropout)(h, deterministic=not train)
+      if config.skip:
+        h = act(nn.Dense(nf)(h)) + h
+      else:
+        h = act(nn.Dense(nf)(h))
+    h = act(nn.Dense(nf)(h)) 
+    h = nn.Dense(1)(h)
+    return h
 
   
 @utils.register_model(name='mlp_vf')

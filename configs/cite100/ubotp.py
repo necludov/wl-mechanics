@@ -4,17 +4,17 @@ import ml_collections
 def get_config():
   config = ml_collections.ConfigDict()
 
-  config.seed = 1
-  config.loss = 'ubot'
+  config.seed = 0
+  config.loss = 'ubot+'
   config.interpolant = 'linear'
 
   # data
   config.data = data = ml_collections.ConfigDict()
   data.task = 'OT'
-  data.name = 'multi'
+  data.name = 'cite'
   data.dim = 100
   data.whiten = False
-  data.test_id = 2
+  data.test_id = 1
   data.t_0, data.t_1 = 0.0, 1.0
 
   # models
@@ -38,7 +38,7 @@ def get_config():
   model_q.nf = 512
   model_q.n_layers = 0
   model_q.skip = False
-  model_q.indicator = True
+  model_q.indicator = False
   model_q.dropout = 0.0
 
   # opts

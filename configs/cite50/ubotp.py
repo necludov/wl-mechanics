@@ -4,15 +4,15 @@ import ml_collections
 def get_config():
   config = ml_collections.ConfigDict()
 
-  config.seed = 1
-  config.loss = 'ubot'
+  config.seed = 4
+  config.loss = 'ubot+'
   config.interpolant = 'linear'
 
   # data
   config.data = data = ml_collections.ConfigDict()
   data.task = 'OT'
-  data.name = 'multi'
-  data.dim = 100
+  data.name = 'cite'
+  data.dim = 50
   data.whiten = False
   data.test_id = 2
   data.t_0, data.t_1 = 0.0, 1.0
@@ -36,9 +36,9 @@ def get_config():
   model_q.ema_rate = 0.999
   model_q.nonlinearity = 'swish'
   model_q.nf = 512
-  model_q.n_layers = 0
+  model_q.n_layers = 1
   model_q.skip = False
-  model_q.indicator = True
+  model_q.indicator = False
   model_q.dropout = 0.0
 
   # opts
@@ -62,7 +62,7 @@ def get_config():
   config.train = train = ml_collections.ConfigDict()
   train.batch_size = 512
   train.n_gradient_steps = 10
-  train.step_size = 1e-1
+  train.step_size = 1e-2
   train.n_jitted_steps = 1
   train.n_iters = 100_000
   train.save_every = 200_000

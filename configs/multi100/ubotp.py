@@ -5,7 +5,7 @@ def get_config():
   config = ml_collections.ConfigDict()
 
   config.seed = 1
-  config.loss = 'ubot'
+  config.loss = 'ubot+'
   config.interpolant = 'linear'
 
   # data
@@ -14,7 +14,7 @@ def get_config():
   data.name = 'multi'
   data.dim = 100
   data.whiten = False
-  data.test_id = 2
+  data.test_id = 1
   data.t_0, data.t_1 = 0.0, 1.0
 
   # models

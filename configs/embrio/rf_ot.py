@@ -31,7 +31,7 @@ def get_config():
 
   config.model_q = model_q = ml_collections.ConfigDict()
   model_q.input_dim = data.dim
-  model_q.n_marginals = 4 if data.test_id is None else 3
+  model_q.n_marginals = 5 if data.test_id is None else 4
   model_q.name = 'mlp_q'
   model_q.ema_rate = 0.999
   model_q.nonlinearity = 'swish'

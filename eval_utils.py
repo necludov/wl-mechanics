@@ -102,6 +102,8 @@ def get_generator(model, config):
     return sde_generator, ot_generator
   elif config.loss == 'ubot':
     return ub_generator, ot_generator
+  elif config.loss == 'ubot+':
+    return ub_generator, ot_generator
   return ode_generator, ot_generator
 
 
