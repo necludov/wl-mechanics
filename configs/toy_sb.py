@@ -14,6 +14,7 @@ def get_config():
   data.task = 'OT'
   data.name = 'toy'
   data.dim = 2
+  data.whiten = False
   data.test_id = None
   data.t_0, data.t_1 = 0.0, 1.0
 
@@ -25,17 +26,19 @@ def get_config():
   model_s.nonlinearity = 'swish'
   model_s.nf = 512
   model_s.n_layers = 2
-  model_s.embed_time = False
+  model_s.skip = False
+  model_s.embed_time = True
   model_s.dropout = 0.0
 
   config.model_q = model_q = ml_collections.ConfigDict()
   model_q.input_dim = data.dim
-  model_q.n_marginals = 2
+  model_q.n_marginals = 4 if data.test_id is None else 3
   model_q.name = 'mlp_q'
   model_q.ema_rate = 0.999
   model_q.nonlinearity = 'swish'
   model_q.nf = 512
   model_q.n_layers = 1
+  model_q.skip = False
   model_q.indicator = True
   model_q.dropout = 0.0
 
@@ -60,10 +63,11 @@ def get_config():
   config.train = train = ml_collections.ConfigDict()
   train.batch_size = 512
   train.n_gradient_steps = 10
+  train.step_size = 1e-2
   train.n_jitted_steps = 1
   train.n_iters = 100_000
   train.save_every = 10_000
-  train.eval_every = 5_000
+  train.eval_every = 10_000
   train.log_every = 50
 
   # evaluation

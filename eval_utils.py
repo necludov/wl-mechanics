@@ -35,12 +35,6 @@ def get_generator(model, config):
 
   def ode_generator(key, state, batch):
     x_0, t_0, x_1, t_1 = batch
-    # solution = jnp.copy(x_0)
-    # t = jnp.copy(t_0)
-    # for _ in range(100):
-    #   solution += 1e-2*jax.lax.stop_gradient(vector_field(t, solution, state))
-    #   t += 1e-2
-    # return (solution, None), 100
     solve = partial(diffrax.diffeqsolve, 
                     terms=diffrax.ODETerm(vector_field), 
                     solver=diffrax.Dopri5(), 

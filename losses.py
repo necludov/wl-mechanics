@@ -205,40 +205,10 @@ def get_physical_potential(config):
     
   return potential
 
-# def get_physical_potential(config):
-#   def potential(t, x):
-#     out = 5*(x**2).sum(1, keepdims=True)
-#     out = jnp.clip(out, -1, 15)
-#     return out
+def get_toy_physical_potential(config):
+  def potential(t, x):
+    out = 5*(x**2).sum(1, keepdims=True)
+    out = jnp.clip(out, -1, 15)
+    return out
     
-#   return potential
-
-# def get_physical_potential(config):
-#   init_key = random.PRNGKey(0)
-#   X, _ = datasets.get_data(config, init_key)
-#   t = np.linspace(0.0, 1.0, len(X)).tolist()
-#   if config.data.test_id is not None:
-#     assert config.data.test_id < (len(X)-1) and config.data.test_id > 0
-#     X_test = X.pop(config.data.test_id)
-#     t_test = t.pop(config.data.test_id)
-#     X_train = X[config.data.test_id-1]
-#     t_train = t[config.data.test_id-1]
-#   else:
-#     X_test = X[1]
-#     t_test = t[1]
-#     X_train = X[0]
-#     t_train = t[0]
-#   if type(X_train) is list:
-#     X_train = np.concatenate(X_train, axis=0)
-#   X_train = jnp.array(X_train)
-  
-#   def potential(t, x):
-#     dists = jnp.linalg.norm(x[:,None,:] - X_train[None,:,:], axis=-1)
-#     ids = jnp.argsort(dists)[:,:10]
-#     neigbours = jnp.array(X_train[ids])
-#     neigbours_dists = ((neigbours - x[:,None,:])**2).sum(-1)
-#     out = neigbours_dists.sum(1, keepdims=True)
-#     # return jnp.minimum(out, 100)
-#     return -out
-    
-#   return potential
+  return potential
