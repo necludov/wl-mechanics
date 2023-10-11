@@ -162,7 +162,7 @@ saved_checkpoints/
 wandb/
 workdirs/
 .vscode/
-assets/
+assets/*.h5ad
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
