@@ -37,8 +37,9 @@ class MLP(nn.Module):
       else:
         h = act(nn.Dense(nf)(h))
     h = act(nn.Dense(nf)(h)) 
+    scale = nn.Dense(config.input_dim)(h)
     h = nn.Dense(config.input_dim)(h)
-    return (h*x).sum(1, keepdims=True)
+    return (h*x + scale).sum(1, keepdims=True)
   
   
 @utils.register_model(name='mlp_scalar_s')
@@ -70,7 +71,7 @@ class MLP(nn.Module):
       else:
         h = act(nn.Dense(nf)(h))
     h = act(nn.Dense(nf)(h)) 
-    h = nn.Dense(1)(h)
+    h = nn.Dense(1, use_bias=False)(h)
     return h
 
   

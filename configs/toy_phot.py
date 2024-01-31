@@ -6,6 +6,7 @@ def get_config():
 
   config.seed = 0
   config.loss = 'phot'
+  config.metric = 'w2'
   config.interpolant = 'linear'
 
   # data
@@ -31,14 +32,14 @@ def get_config():
 
   config.model_q = model_q = ml_collections.ConfigDict()
   model_q.input_dim = data.dim
-  model_q.n_marginals = 4 if data.test_id is None else 3
+  model_q.n_marginals = 2
   model_q.name = 'mlp_q'
   model_q.ema_rate = 0.999
   model_q.nonlinearity = 'swish'
   model_q.nf = 512
   model_q.n_layers = 1
   model_q.skip = False
-  model_q.indicator = True
+  model_q.indicator = False
   model_q.dropout = 0.0
 
   # opts

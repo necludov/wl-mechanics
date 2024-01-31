@@ -7,6 +7,7 @@ def get_config():
   config.seed = 0
   config.loss = 'sb'
   config.sigma = 0.1
+  config.metric = 'w2'
   config.interpolant = 'linear'
 
   # data

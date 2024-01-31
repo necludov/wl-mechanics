@@ -7,11 +7,12 @@
 # for normal t4v2,t4v1,a40
 # for high t4v2
 # for deadline t4v2,t4v1,a40
-#SBATCH --partition=a40,t4v2
+#SBATCH --partition=a40
 
 #SBATCH --gres=gpu:1
-#SBATCH --account=deadline
-#SBATCH --qos=deadline
+#SBATC --account=deadline
+#SBATCH --qos=m
+#SBATCH --time=4:00:00
 #SBATCH --output=./logs/slurm-%j.out
 #SBATCH --error=./logs/slurm-%j.err
 
@@ -29,7 +30,7 @@ source /ssd003/home/${USER}/.bashrc
 source /ssd003/home/${USER}/venvs/jax-env/bin/activate
 
 
-python main.py --config configs/multi100/ubot.py \
+python main.py --config configs/toy_ubot.py \
                --workdir $PWD/checkpoint/${SLURM_JOB_ID} \
                --mode 'train'
 

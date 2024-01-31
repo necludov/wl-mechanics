@@ -70,7 +70,8 @@ def get_generator(model, config):
                               state.params_ema if config.eval.use_ema else state.model_params, 
                               train=False)
       dsdx = jax.grad(lambda _t, _x: s(_t, _x).sum(), argnums=1)
-      return (dsdx(t*jnp.ones((y.shape[0],1)),y), s(t*jnp.ones((y.shape[0],1)), y))
+      s_val = s(t*jnp.ones((y.shape[0],1)), y)
+      return (dsdx(t*jnp.ones((y.shape[0],1)),y), config.lambd*s_val)
     
     x_0, t_0, x_1, t_1 = batch
     solve = partial(diffrax.diffeqsolve, 
@@ -79,7 +80,8 @@ def get_generator(model, config):
                     t0=t_0, t1=t_1, dt0=1e-3, 
                     saveat=diffrax.SaveAt(ts=[t_1]),
                     stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5), 
-                    adjoint=diffrax.NoAdjoint())
+                    adjoint=diffrax.NoAdjoint(),
+                    max_steps=None)
 
     solution = solve(y0=(x_0, jnp.zeros((x_0.shape[0],1))), args=state)
     x, logw = solution.ys[0][-1], solution.ys[1][-1]
@@ -112,3 +114,26 @@ def get_w1(M, w_x=None, w_y=None):
   w_x, w_y = get_w(w_x, M.shape[0]), get_w(w_y, M.shape[1])
   return ot.emd2(w_x, w_y, M, numItermax=1e7)
   
+
+
+from sklearn.metrics.pairwise import rbf_kernel
+
+def mmd_distance(x, y, gamma):
+    xx = rbf_kernel(x, x, gamma)
+    xy = rbf_kernel(x, y, gamma)
+    yy = rbf_kernel(y, y, gamma)
+
+    return xx.mean() + yy.mean() - 2 * xy.mean()
+
+def compute_scalar_mmd(target, transport, gammas=None):
+    if gammas is None:
+        gammas = [2, 1, 0.5, 0.1, 0.01, 0.005]
+
+    def safe_mmd(*args):
+        try:
+            mmd = mmd_distance(*args)
+        except ValueError:
+            mmd = np.nan
+        return mmd
+
+    return np.mean(list(map(lambda x: safe_mmd(target, transport, x), gammas)))

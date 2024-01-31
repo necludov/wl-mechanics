@@ -6,6 +6,8 @@ def get_config():
 
   config.seed = 0
   config.loss = 'ubot'
+  config.metric = 'w2'
+  config.lambd = 1.0
   config.interpolant = 'linear'
 
   # data
@@ -13,13 +15,14 @@ def get_config():
   data.task = 'OT'
   data.name = 'toy'
   data.dim = 2
+  data.whiten = False
   data.test_id = None
   data.t_0, data.t_1 = 0.0, 1.0
 
   # models
   config.model_s = model_s = ml_collections.ConfigDict()
   model_s.input_dim = data.dim
-  model_s.name = 'mlp_scalar_s'
+  model_s.name = 'mlp_s'
   model_s.ema_rate = 0.999
   model_s.nonlinearity = 'swish'
   model_s.nf = 512
@@ -30,7 +33,7 @@ def get_config():
 
   config.model_q = model_q = ml_collections.ConfigDict()
   model_q.input_dim = data.dim
-  model_q.n_marginals = 4 if data.test_id is None else 3
+  model_q.n_marginals = 2
   model_q.name = 'mlp_q'
   model_q.ema_rate = 0.999
   model_q.nonlinearity = 'swish'
@@ -51,7 +54,7 @@ def get_config():
 
   config.optimizer_q = optimizer_q = ml_collections.ConfigDict()
   optimizer_q.name = 'adamw'
-  optimizer_q.lr = 1e-4
+  optimizer_q.lr = 2e-4
   optimizer_q.beta1 = 0.9
   optimizer_q.eps = 1e-8
   optimizer_q.warmup = 5_000

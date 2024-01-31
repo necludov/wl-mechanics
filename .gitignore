@@ -163,6 +163,12 @@ wandb/
 workdirs/
 .vscode/
 assets/*.h5ad
+assets/gifs/ot/*
+assets/gifs/phot/*
+assets/gifs/sb/*
+assets/gifs/ubot/*
+assets/*.csv
+assets/*.npz
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

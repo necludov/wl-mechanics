@@ -78,9 +78,8 @@ def train(config, workdir):
   # init dataloaders
   key, *init_key = random.split(key, 3)
   batch_iterator, inv_scaler = datasets.get_batch_iterator(config, init_key[0])
-  eval_iterator, _ = datasets.get_batch_iterator(config, init_key[1], eval=True)
-  
-  X_train, t_train, X_test, t_test = eval_iterator(key)
+  val_iterator, _ = datasets.get_batch_iterator(config, init_key[1], eval=True, val=True)
+  test_iterator, _ = datasets.get_batch_iterator(config, init_key[1], eval=True)
   
   # init eval generators
   pairwise_dist = jax.jit(lambda _x,_y: jnp.linalg.norm(_x[:,None,:]-_y[None,:,:], axis=-1))
@@ -120,13 +119,34 @@ def train(config, workdir):
                                   keep=50, prefix='chkpt_q_')
 
     if (step % config.train.eval_every == 0) and (jax.process_index() == 0):
-      key, *eval_keys = random.split(key, 4)
-      X_train, t_train, X_test, t_test = eval_iterator(eval_keys[0])
-      (ode_solution, weights), ode_steps = ode_generator(eval_keys[1], flax_utils.unreplicate(state_s), (X_train, t_train, X_test, t_test))
-      (ot_solution, _), ot_steps = ot_generator(eval_keys[2], flax_utils.unreplicate(state_s), (X_train, t_train, X_test, t_test))
-      
-      wandb.log({'w1_ode': eutils.get_w1(pairwise_dist(inv_scaler(ode_solution), inv_scaler(X_test)), weights),
-                 'w1_ot': eutils.get_w1(pairwise_dist(inv_scaler(ot_solution), inv_scaler(X_test)))}, step=step)
+      X_init, t_init, X_end, t_end = val_iterator()
+      for i in range(len(X_init)):
+        key, *eval_keys = random.split(key, 4)
+        (ode_solution, weights), ode_steps = ode_generator(eval_keys[1], flax_utils.unreplicate(state_s), (X_init[i], t_init[i], X_end[i], t_end[i]))
+        # (ot_solution, _), ot_steps = ot_generator(eval_keys[2], flax_utils.unreplicate(state_s), (X_train, t_train, X_test, t_test))
+        if config.metric == 'w1':
+          metric = eutils.get_w1(pairwise_dist(inv_scaler(ode_solution), inv_scaler(X_end[i])), weights)
+        if config.metric == 'w2':
+          metric = np.sqrt(eutils.get_w1(pairwise_dist(inv_scaler(ode_solution), inv_scaler(X_end[i]))**2, weights))
+        wandb.log({'metric_val_%d' % (i + 1): metric}, step=step)
+        
+      X_init, t_init, X_end, t_end = test_iterator()
+      for i in range(len(X_init)):
+        key, *eval_keys = random.split(key, 4)
+        (ode_solution, weights), ode_steps = ode_generator(eval_keys[1], flax_utils.unreplicate(state_s), (X_init[i], t_init[i], X_end[i], t_end[i]))
+        # (ot_solution, _), ot_steps = ot_generator(eval_keys[2], flax_utils.unreplicate(state_s), (X_train, t_train, X_test, t_test))
+        if config.metric == 'w1':
+          metric = eutils.get_w1(pairwise_dist(inv_scaler(ode_solution), inv_scaler(X_end[i])), weights)
+        if config.metric == 'w2':
+          metric = np.sqrt(eutils.get_w1(pairwise_dist(inv_scaler(ode_solution), inv_scaler(X_end[i]))**2, weights))
+        wandb.log({'metric_test_%d' % (i + 1): metric} , step=step)
+        
+        if weights is not None:
+          weights /= weights.sum()
+          ids = np.random.choice(len(ode_solution), len(X_end[i]), p=np.array(weights))
+          ode_solution = ode_solution[ids]
+        mmd = eutils.compute_scalar_mmd(inv_scaler(ode_solution), inv_scaler(X_end[i]))
+        wandb.log({'mmd_test_%d' % (i + 1): mmd} , step=step)
   wandb.finish()
 
 
