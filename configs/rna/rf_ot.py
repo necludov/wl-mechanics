@@ -7,24 +7,25 @@ def get_config():
   config.seed = 0
   config.loss = 'rf'
   config.interpolant = 'ot'
+  config.metric = 'w1'
 
   # data
   config.data = data = ml_collections.ConfigDict()
   data.task = 'OT'
-  data.name = 'embrio'
+  data.name = 'rna'
   data.dim = 5
   data.whiten = True
-  data.test_id = 1
+  data.test_id = None
   data.t_0, data.t_1 = 0.0, 1.0
 
   # models
   config.model_s = model_s = ml_collections.ConfigDict()
   model_s.input_dim = data.dim
-  model_s.name = 'mlp_s'
+  model_s.name = 'mlp_vf'
   model_s.ema_rate = 0.999
   model_s.nonlinearity = 'swish'
   model_s.nf = 512
-  model_s.n_layers = 2
+  model_s.n_layers = 3
   model_s.skip = False
   model_s.embed_time = True
   model_s.dropout = 0.0

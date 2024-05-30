@@ -21,7 +21,7 @@ def get_batch_iterator(config, init_key, eval=False, val=False):
     def val_iterator():
       return ([X_val[0]], [t[0]], [X_val[-1]], [t[-1]])
   elif config.data.test_id is not None:
-    assert config.data.test_id < (len(X)-1) and config.data.test_id > 0
+    assert config.data.test_id < (len(X_train)-1) and config.data.test_id > 0
     def test_iterator():
       return ([X_train[config.data.test_id-1]], [t[config.data.test_id-1]], 
               [X_train.pop(config.data.test_id)], [t.pop(config.data.test_id)])
@@ -66,8 +66,11 @@ def get_batch_iterator(config, init_key, eval=False, val=False):
   for i in range(len(X_train)-1):
     a, b = ot.unif(X_train[i].shape[0]), ot.unif(X_train[i+1].shape[0])
     M = ot.dist(X_train[i], X_train[i+1], metric='euclidean')
-    plan = ot.emd(a,b,M,numItermax=1e7)
-    log_plans.append(jnp.array(np.log(plan/plan.sum(1, keepdims=True))))
+    plan = ot.emd(np.array(a).astype(np.float32),
+                  np.array(b).astype(np.float32),
+                  np.array(M).astype(np.float32),numItermax=1e7)
+    plan = plan/plan.sum(1, keepdims=True)
+    log_plans.append(jnp.array(np.log(plan)))
     
   for i in range(len(X_train)):
     X_train[i] = jnp.array(X_train[i])
@@ -82,7 +85,7 @@ def get_batch_iterator(config, init_key, eval=False, val=False):
         ids = jax.random.categorical(keys[i], np.zeros((X_train[0].shape[0],)), shape=(batch_size,))
       else:
         ids = jax.random.categorical(keys[i], log_plans[i-1][ids], axis=1, shape=(batch_size,))
-      x_batch = x_batch.at[:,i,:].set(X[i][ids])
+      x_batch = x_batch.at[:,i,:].set(X_train[i][ids])
       t_batch = t_batch.at[:,i,:].set(t[i])
     
     x_batch = x_batch.reshape(jax.local_device_count(),
@@ -193,7 +196,7 @@ def get_toy_data(config, init_key):
 
 def get_toy_data_for_ubot(config, init_key):
   init_key = jax.random.split(init_key)
-  DS = 2_000
+  DS = 10_000
   sigma = 3e-1
   X_init = jnp.concatenate([-jnp.ones((DS,1)), jnp.zeros((DS,1))], 1)
   X_final = -X_init
@@ -207,7 +210,7 @@ def get_toy_data_for_ubot(config, init_key):
 
 def get_toy_data_for_phot(config, init_key):
   init_key = jax.random.split(init_key)
-  DS = 2_000
+  DS = 10_000
   sigma = 1e-1
   X_init = jnp.concatenate([-jnp.ones((DS,1)), jnp.zeros((DS,1))], 1)
   X_final = -X_init
@@ -221,7 +224,7 @@ def get_toy_data_for_phot(config, init_key):
 
 def get_toy_data_for_ot(config, init_key):
   init_key = jax.random.split(init_key)
-  DS = 2_000
+  DS = 10_000
   sigma = 1e-1
   X_init = (jnp.ones((DS//8, 8))*(2*jnp.pi*jnp.arange(8)/8).reshape(1,-1)).reshape(-1,1)
   X_init = jnp.concatenate([jnp.cos(X_init), jnp.sin(X_init)], 1)

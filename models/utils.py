@@ -77,8 +77,8 @@ def init_model_s(rng, config):
   model = model_def()
   variables = model.init({'params': params_rng, 'dropout': dropout_rng}, fake_t, fake_x, train=True)
   # Variables is a `flax.FrozenDict`. It is immutable and respects functional programming
-  init_model_state, initial_params = variables.pop('params')
-  return model, init_model_state, initial_params
+  initial_params = variables.pop('params')
+  return model, initial_params
 
 
 def init_model_q(rng, config):
@@ -94,8 +94,8 @@ def init_model_q(rng, config):
   model = model_def()
   variables = model.init({'params': params_rng, 'dropout': dropout_rng}, fake_t, fake_batch, train=True)
   # Variables is a `flax.FrozenDict`. It is immutable and respects functional programming
-  init_model_state, initial_params = variables.pop('params')
-  return model, init_model_state, initial_params
+  initial_params = variables.pop('params')
+  return model, initial_params
 
 
 def get_model_fn(model, params, train=False):

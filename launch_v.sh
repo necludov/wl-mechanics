@@ -26,11 +26,10 @@ ln -sfn /checkpoint/${USER}/${SLURM_JOB_ID} $PWD/checkpoint/${SLURM_JOB_ID}
 touch /checkpoint/${USER}/${SLURM_JOB_ID}/DELAYPURGE
 mkdir /checkpoint/${USER}/${SLURM_JOB_ID}/checkpoints
 
-source /ssd003/home/${USER}/.bashrc
-source /ssd003/home/${USER}/venvs/jax-env/bin/activate
+source $HOME/.bashrc
+source $HOME/venvs/jax-env/bin/activate
 
-
-python main.py --config configs/toy_ubot.py \
+python main.py --config configs/rna/rf_ot.py \
                --workdir $PWD/checkpoint/${SLURM_JOB_ID} \
                --mode 'train'
 

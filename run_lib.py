@@ -9,10 +9,10 @@ import wandb
 from tqdm.auto import tqdm, trange
 
 import jax
+import orbax
 import flax
 import numpy as np
 import flax.jax_utils as flax_utils
-import tensorflow as tf
 from jax import random, jit
 from jax import numpy as jnp
 from flax.training import checkpoints
@@ -30,11 +30,23 @@ def train(config, workdir):
   print(f'running config.seed: {config.seed}', flush=True)
   key = random.PRNGKey(config.seed)
   checkpoint_dir = os.path.join(workdir, "checkpoints")
-  tf.io.gfile.makedirs(checkpoint_dir)
+  
+  mgr_s_options = orbax.checkpoint.CheckpointManagerOptions(
+    create=True, max_to_keep=50, step_prefix='chkpts')
+  mgr_s = orbax.checkpoint.CheckpointManager(
+    checkpoint_dir,
+    orbax.checkpoint.Checkpointer(orbax.checkpoint.PyTreeCheckpointHandler()), mgr_s_options)
+  mgr_s.reload()
+  mgr_q_options = orbax.checkpoint.CheckpointManagerOptions(
+    create=True, max_to_keep=50, step_prefix='chkptq')
+  mgr_q = orbax.checkpoint.CheckpointManager(
+    checkpoint_dir,
+    orbax.checkpoint.Checkpointer(orbax.checkpoint.PyTreeCheckpointHandler()), mgr_q_options)
+  mgr_q.reload()
 
   key, *init_key = random.split(key, 3)
   # init model s
-  model_s, _, initial_params = mutils.init_model_s(init_key[0], config.model_s)
+  model_s, initial_params = mutils.init_model_s(init_key[0], config.model_s)
   optimizer_s = tutils.get_optimizer(config.optimizer_s)
   opt_state_s = optimizer_s.init(initial_params)
   time_sampler, init_sampler_state = tutils.get_time_sampler(config)
@@ -45,12 +57,14 @@ def train(config, workdir):
                          params_ema=initial_params,
                          sampler_state=init_sampler_state,
                          key=key, wandbid=np.random.randint(int(1e7),int(1e8)))
-  state_s = checkpoints.restore_checkpoint(checkpoint_dir, state_s, prefix='chkpt_s_')
+  restore_args = flax.training.orbax_utils.restore_args_from_target(state_s, mesh=None)
+  if mgr_s.latest_step() is not None:
+    state_s = mgr_s.restore(mgr_s.latest_step(), items=state_s, restore_kwargs={'restore_args': restore_args})
   initial_step = int(state_s.step)
   key = state_s.key
 
   # init model q
-  model_q, _, initial_params = mutils.init_model_q(init_key[1], config.model_q)
+  model_q, initial_params = mutils.init_model_q(init_key[1], config.model_q)
   optimizer_q = tutils.get_optimizer(config.optimizer_q)
   opt_state_q = optimizer_q.init(initial_params)
 
@@ -60,11 +74,17 @@ def train(config, workdir):
                          params_ema=initial_params,
                          sampler_state=init_sampler_state,
                          key=state_s.key, wandbid=state_s.wandbid)
-  state_q = checkpoints.restore_checkpoint(checkpoint_dir, state_q, prefix='chkpt_q_')
+  restore_args = flax.training.orbax_utils.restore_args_from_target(state_q, mesh=None)
+  if mgr_q.latest_step() is not None:
+    state_q = mgr_q.restore(mgr_q.latest_step(), items=state_q, restore_kwargs={'restore_args': restore_args})
 
   if jax.process_index() == 0:
+    # wandb.init(id=str(state_s.wandbid), 
+    #            project='single-cell-' + config.data.name, 
+    #            resume="allow",
+    #            config=json.loads(config.to_json_best_effort()))
     wandb.init(id=str(state_s.wandbid), 
-               project='single-cell-' + config.data.name, 
+               project='single-cell-embrio', 
                resume="allow",
                config=json.loads(config.to_json_best_effort()))
     os.environ["WANDB_RESUME"] = "allow"
@@ -109,14 +129,13 @@ def train(config, workdir):
     if (step % config.train.save_every == 0) and (jax.process_index() == 0):
       saved_state = flax_utils.unreplicate(state_s)
       saved_state = saved_state.replace(key=key)
-      checkpoints.save_checkpoint(checkpoint_dir, saved_state,
-                                  step=step // config.train.save_every,
-                                  keep=50, prefix='chkpt_s_')
+      save_args = flax.training.orbax_utils.save_args_from_target(saved_state)
+      mgr_s.save(step // config.train.save_every, saved_state, save_kwargs={'save_args': save_args})
+      
       saved_state = flax_utils.unreplicate(state_q)
       saved_state = saved_state.replace(key=key)
-      checkpoints.save_checkpoint(checkpoint_dir, saved_state,
-                                  step=step // config.train.save_every,
-                                  keep=50, prefix='chkpt_q_')
+      save_args = flax.training.orbax_utils.save_args_from_target(saved_state)
+      mgr_q.save(step // config.train.save_every, saved_state, save_kwargs={'save_args': save_args})
 
     if (step % config.train.eval_every == 0) and (jax.process_index() == 0):
       X_init, t_init, X_end, t_end = val_iterator()

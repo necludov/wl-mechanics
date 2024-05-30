@@ -1,7 +1,6 @@
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
-import tensorflow as tf
 import os
 
 import run_lib
@@ -15,7 +14,6 @@ flags.DEFINE_string("mode", "train", "train, eval, 5seeds")
 flags.mark_flags_as_required(["workdir", "config"])
 
 def launch(argv):
-  tf.config.experimental.set_visible_devices([], "GPU")
   os.environ['XLA_PYTHON_CLIENT_PREALLOCATE'] = 'false'
   if FLAGS.mode == 'train':
     run_lib.train(FLAGS.config, FLAGS.workdir)

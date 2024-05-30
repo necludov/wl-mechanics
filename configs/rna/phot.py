@@ -12,7 +12,7 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.task = 'OT'
-  data.name = 'embrio'
+  data.name = 'rna'
   data.dim = 5
   data.whiten = True
   data.t_0, data.t_1 = 0.0, 1.0

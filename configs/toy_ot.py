@@ -22,7 +22,7 @@ def get_config():
   config.model_s = model_s = ml_collections.ConfigDict()
   model_s.input_dim = data.dim
   model_s.name = 'mlp_s'
-  model_s.ema_rate = 0.999
+  model_s.ema_rate = 0.99
   model_s.nonlinearity = 'swish'
   model_s.nf = 512
   model_s.n_layers = 2
@@ -34,7 +34,7 @@ def get_config():
   model_q.input_dim = data.dim
   model_q.n_marginals = 2
   model_q.name = 'mlp_q'
-  model_q.ema_rate = 0.999
+  model_q.ema_rate = 0.99
   model_q.nonlinearity = 'swish'
   model_q.nf = 512
   model_q.n_layers = 1

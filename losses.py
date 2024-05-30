@@ -36,7 +36,6 @@ def get_loss_ours(config, model_s, model_q, time_sampler, train):
     def potential(_t, _x, _key, _s):
       dsdtdx_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=[0,1])
       dsdt, dsdx = dsdtdx_fn(_t, _x, _key)
-      center = jnp.array([[1.0, 0.0]])
       return dsdt + 0.5*(dsdx**2).sum(1, keepdims=True) + physical_potential(_t, _x)
   elif config.loss == 'sb':
     def potential(_t, _x, _key, _s):
@@ -54,7 +53,7 @@ def get_loss_ours(config, model_s, model_q, time_sampler, train):
     def potential(_t, _x, _key, _s):
       dsdtdx_fn = jax.grad(lambda __t, __x, __key: _s(__t, __x, __key).sum(), argnums=[0,1])
       dsdt, dsdx = dsdtdx_fn(_t, _x, _key)
-      return dsdt + 0.5*(dsdx**2).sum(1, keepdims=True) + config.lambd*0.5*(_s(_t, _x, _key))**2 # - _s(_t, _x, _key).mean(0, keepdims=True)
+      return dsdt + 0.5*(dsdx**2).sum(1, keepdims=True) + config.lambd*0.5*(_s(_t, _x, _key))**2
   elif config.loss == 'ubot+':
     physical_potential = get_physical_potential(config)
     def potential(_t, _x, _key, _s):
@@ -232,8 +231,7 @@ def get_physical_potential(config):
 
 def get_toy_physical_potential(config):
   def potential(t, x):
-    out = 5*(x**2).sum(1, keepdims=True)
-    out = jnp.clip(out, -1, 15)
+    out = (x**2).sum(1, keepdims=True)
     return out
     
   return potential

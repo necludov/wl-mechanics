@@ -40,8 +40,7 @@ def get_generator(model, config):
                     solver=diffrax.Dopri5(), 
                     t0=t_0, t1=t_1, dt0=1e-3, 
                     saveat=diffrax.SaveAt(ts=[t_1]),
-                    stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5), 
-                    adjoint=diffrax.NoAdjoint())
+                    stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5))
   
     solution = solve(y0=x_0, args=state)
     return (solution.ys[-1], None), solution.stats['num_steps']
@@ -57,8 +56,8 @@ def get_generator(model, config):
                     solver=diffrax.Euler(), 
                     t0=t_0, t1=t_1, dt0=1e-3, 
                     saveat=diffrax.SaveAt(ts=[t_1]),
-                    stepsize_controller=diffrax.ConstantStepSize(True), 
-                    adjoint=diffrax.NoAdjoint())
+                    stepsize_controller=diffrax.ConstantStepSize(),
+                    adjoint=diffrax.DirectAdjoint())
 
     solution = solve(y0=x_0, args=state)
     return (solution.ys[-1], None), solution.stats['num_steps']
@@ -79,8 +78,7 @@ def get_generator(model, config):
                     solver=diffrax.Dopri5(), 
                     t0=t_0, t1=t_1, dt0=1e-3, 
                     saveat=diffrax.SaveAt(ts=[t_1]),
-                    stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5), 
-                    adjoint=diffrax.NoAdjoint(),
+                    stepsize_controller=diffrax.PIDController(rtol=1e-5, atol=1e-5),
                     max_steps=None)
 
     solution = solve(y0=(x_0, jnp.zeros((x_0.shape[0],1))), args=state)
